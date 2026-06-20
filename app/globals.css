@@ -1,0 +1,41 @@
+@import "tailwindcss";
+
+:root {
+  --background: #0a0814;
+  --foreground: #f4f1ff;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+html,
+body {
+  background-color: var(--background);
+  color: var(--foreground);
+}
+
+body {
+  /* Stage lighting: a couple of soft colored spots over near-black. */
+  background-image:
+    radial-gradient(
+      55rem 40rem at 12% -10%,
+      rgba(217, 70, 239, 0.18),
+      transparent 60%
+    ),
+    radial-gradient(
+      50rem 38rem at 95% 0%,
+      rgba(34, 211, 238, 0.14),
+      transparent 55%
+    );
+  background-attachment: fixed;
+  font-family: var(--font-sans), system-ui, sans-serif;
+  -webkit-tap-highlight-color: transparent;
+}
+
+button {
+  touch-action: manipulation;
+}
