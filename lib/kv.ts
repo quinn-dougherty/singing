@@ -20,6 +20,14 @@ export interface KV {
   hdel(key: string, ...fields: string[]): Promise<void>;
 }
 
+/** Which backend env vars are present, without constructing a client. */
+export function kvBackend(): "upstash" | "memory" {
+  const url = process.env.KV_REST_API_URL ?? process.env.UPSTASH_REDIS_REST_URL;
+  const token =
+    process.env.KV_REST_API_TOKEN ?? process.env.UPSTASH_REDIS_REST_TOKEN;
+  return url && token ? "upstash" : "memory";
+}
+
 function upstashFromEnv(): Redis | null {
   const url =
     process.env.KV_REST_API_URL ?? process.env.UPSTASH_REDIS_REST_URL;
@@ -140,13 +148,22 @@ export function getKv(): KV {
   if (redis) {
     globalForKv.__karaokeKv = new UpstashKV(redis);
   } else {
-    if (!globalForKv.__karaokeMem) globalForKv.__karaokeMem = new Map();
-    globalForKv.__karaokeKv = new MemoryKV(globalForKv.__karaokeMem);
-    if (process.env.NODE_ENV !== "production") {
-      console.warn(
-        "[karaoke] No Redis env vars found — using in-memory store (dev only).",
+    // In production the in-memory store is a trap: it lives in a single warm
+    // function instance and vanishes when that instance recycles (~minutes),
+    // making every room appear to "despawn." Fail loudly instead of pretending
+    // to work, so a missing Upstash integration is caught immediately.
+    if (process.env.NODE_ENV === "production") {
+      throw new Error(
+        "No Redis env vars (KV_REST_API_URL/TOKEN or UPSTASH_REDIS_REST_URL/TOKEN) " +
+          "in production. Link the Upstash integration to this project/environment — " +
+          "the in-memory fallback does not persist across requests on Vercel.",
       );
     }
+    if (!globalForKv.__karaokeMem) globalForKv.__karaokeMem = new Map();
+    globalForKv.__karaokeKv = new MemoryKV(globalForKv.__karaokeMem);
+    console.warn(
+      "[karaoke] No Redis env vars found — using in-memory store (dev only).",
+    );
   }
   return globalForKv.__karaokeKv;
 }
