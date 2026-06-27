@@ -28,6 +28,31 @@ export function kvBackend(): "upstash" | "memory" {
   return url && token ? "upstash" : "memory";
 }
 
+/** Coerce a hash value back to the string form the app stores. */
+function hashValueToString(x: unknown): string {
+  if (typeof x === "string") return x;
+  if (x !== null && typeof x === "object") return JSON.stringify(x);
+  return String(x);
+}
+
+/**
+ * Normalize an HGETALL reply into Record<string,string>, accepting either a
+ * flat [field, value, …] array (Upstash with automaticDeserialization:false)
+ * or a plain object (other configs, possibly with non-string values).
+ */
+function toRecord(v: unknown): Record<string, string> {
+  const out: Record<string, string> = {};
+  if (!v) return out;
+  if (Array.isArray(v)) {
+    for (let i = 0; i + 1 < v.length; i += 2) {
+      out[String(v[i])] = hashValueToString(v[i + 1]);
+    }
+  } else if (typeof v === "object") {
+    for (const [k, val] of Object.entries(v)) out[k] = hashValueToString(val);
+  }
+  return out;
+}
+
 function upstashFromEnv(): Redis | null {
   const url =
     process.env.KV_REST_API_URL ?? process.env.UPSTASH_REDIS_REST_URL;
@@ -61,9 +86,13 @@ class UpstashKV implements KV {
     return this.redis.hget<string>(key, field).then((v) => v ?? null);
   }
   hgetall(key: string) {
+    // With automaticDeserialization:false, @upstash/redis returns HGETALL as a
+    // raw flat array [field, value, field, value, …] rather than an object —
+    // and other configs return an object with JSON-parsed values. Normalize
+    // both into the Record<string,string> the rest of the app expects.
     return this.redis
-      .hgetall<Record<string, string>>(key)
-      .then((v) => v ?? {});
+      .hgetall<Record<string, unknown>>(key)
+      .then((v) => toRecord(v));
   }
   async hset(key: string, entries: Record<string, string>) {
     if (Object.keys(entries).length) await this.redis.hset(key, entries);
