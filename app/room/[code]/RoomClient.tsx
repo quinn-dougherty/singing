@@ -5,6 +5,7 @@ import { useCallback, useEffect, useState } from "react";
 import { useIdentity } from "@/lib/identity";
 import { songSearchUrl } from "@/lib/song";
 import type { RoomState, SongView, VoteDir } from "@/lib/types";
+import RoomQr from "./RoomQr";
 
 const POLL_MS = 2000;
 
@@ -144,7 +145,7 @@ export default function RoomClient({ code }: { code: string }) {
         </div>
       </header>
 
-      <main className="mx-auto w-full max-w-md flex-1 px-4 pt-4 pb-24">
+      <main className="mx-auto w-full max-w-md flex-1 px-4 pt-4 pb-44">
         <AddSong
           code={code}
           clientId={clientId}
@@ -220,6 +221,8 @@ export default function RoomClient({ code }: { code: string }) {
           </div>
         )}
       </main>
+
+      <RoomQr code={code} />
 
       {(needsName || editingName) && (
         <NameGate
