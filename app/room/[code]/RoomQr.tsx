@@ -31,13 +31,13 @@ export default function RoomQr({ code }: { code: string }) {
     >
       <QRCodeSVG
         value={url}
-        size={big ? 320 : 104}
+        size={big ? 480 : 180}
         level="M"
-        className="max-w-[calc(100vw-4rem)] h-auto"
+        className="h-auto max-h-[calc(100vh-6rem)] max-w-[calc(100vw-4rem)]"
       />
       <span
         className={`font-mono font-black tracking-[0.2em] text-black ${
-          big ? "text-2xl" : "text-xs"
+          big ? "text-3xl" : "text-sm"
         }`}
       >
         {code}

@@ -145,7 +145,7 @@ export default function RoomClient({ code }: { code: string }) {
         </div>
       </header>
 
-      <main className="mx-auto w-full max-w-md flex-1 px-4 pt-4 pb-44">
+      <main className="mx-auto w-full max-w-md flex-1 px-4 pt-4 pb-64">
         <AddSong
           code={code}
           clientId={clientId}
